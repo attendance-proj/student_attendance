@@ -1,13 +1,18 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 import psycopg2
 import traceback
 import io
 import openpyxl
+import os
 
 app = Flask(__name__)
+CORS(app)  # Allow frontend access
+
 app.url_map.strict_slashes = False
 
-DATABASE_URL = "postgresql://postgres:Tushar%403105E@db.zzghodffauzifcicxkke.supabase.co:5432/postgres?sslmode=require"
+# Use environment variable for security
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
     try:
@@ -44,11 +49,11 @@ def login():
         result = cursor.fetchone()
 
         if result:
-            user = {
-                "name": result[0],
-                "role": result[1]
-            }
-            return jsonify({"success": True, "role": user["role"], "name": user["name"]})
+            return jsonify({
+                "success": True,
+                "role": result[1],
+                "name": result[0]
+            })
         else:
             return jsonify({"success": False, "message": "Invalid Credentials"}), 401
 
@@ -170,14 +175,7 @@ def export_report(course_code):
         if conn:
             conn.close()
 
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if conn:
-            conn.close()
-
+# --- RUN SERVER ---
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
